@@ -15,7 +15,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold">Welcome back</h1>
           <p className="mt-1 text-sm text-muted">Sign in to your reconnaissance console.</p>
           <div className="mt-6">
-            <AuthForm mode="login" />
+            <AuthForm />
           </div>
         </div>
       </div>

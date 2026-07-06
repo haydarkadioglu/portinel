@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm run build",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/scans/route.ts": { "maxDuration": 60 },
+    "src/app/api/v1/scans/route.ts": { "maxDuration": 60 },
+    "src/app/api/scans/[id]/stream/route.ts": { "maxDuration": 60 },
+    "src/app/api/chat/route.ts": { "maxDuration": 60 },
+    "src/app/api/mcp/[id]/route.ts": { "maxDuration": 60 },
+    "src/app/api/mcp/[id]/call/route.ts": { "maxDuration": 60 }
+  }
+}

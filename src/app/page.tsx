@@ -134,8 +134,8 @@ export default function LandingPage() {
             <p className="mx-auto mt-3 max-w-md text-muted">
               Join security teams using Portinel to find exposures before attackers do.
             </p>
-            <Link href="/register" className="btn btn-primary mt-6 px-6 py-3 text-base">
-              Create a free account
+            <Link href="/login" className="btn btn-primary mt-6 px-6 py-3 text-base">
+              Sign in
             </Link>
           </div>
         </div>
