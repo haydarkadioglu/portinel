@@ -1,25 +1,25 @@
 // ============================================================================
-// session.ts — Server-only session / authorization helpers.
+// session.ts — LOCAL-ONLY session / authorization helpers (master branch).
 //
-// Primary auth: Supabase Auth (cookie-based SSR sessions via @supabase/ssr).
-// Fallback: demo bypass mode (local DB identity) for sandbox/development when
-// Supabase isn't configured or a session hasn't been established.
+// Uses JWT-based auth (jose) + scrypt password hashing. No Supabase dependency.
+// Fully self-contained — works with just PostgreSQL + the .env AUTH_SECRET.
 // ============================================================================
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { users, apiKeys } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { hashApiKey } from "./auth";
+import {
+  COOKIE_NAME,
+  createSessionToken,
+  hashApiKey,
+  hashPassword,
+  verifyToken,
+  type SessionClaims,
+} from "./auth";
 import { ensureBootstrap } from "./bootstrap";
-import { getSupabaseServer, isSupabaseConfigured } from "./supabase-clients";
 import type { Role } from "./rbac";
 import { hasPermission, type Permission } from "./rbac";
-
-// Demo bypass is DISABLED in production — all requests require a real
-// Supabase Auth session. (Set to true only for local sandbox testing.)
-export const DEMO_BYPASS = false;
-const DEMO_EMAIL = "admin@portinel.io";
 
 export interface SafeUser {
   id: string;
@@ -34,10 +34,9 @@ export interface SafeUser {
   scanCount: number;
   createdAt: Date;
   lastLoginAt: Date | null;
-  authSource: "supabase" | "demo";
 }
 
-function mapUser(u: typeof users.$inferSelect, source: "supabase" | "demo" = "supabase"): SafeUser {
+function mapUser(u: typeof users.$inferSelect): SafeUser {
   return {
     id: u.id,
     email: u.email,
@@ -51,116 +50,22 @@ function mapUser(u: typeof users.$inferSelect, source: "supabase" | "demo" = "su
     scanCount: u.scanCount,
     createdAt: u.createdAt,
     lastLoginAt: u.lastLoginAt,
-    authSource: source,
   };
 }
 
-// ---------------------------------------------------------------------------
-// Demo user (fallback when no Supabase session)
-// ---------------------------------------------------------------------------
-let demoUserCache: SafeUser | null = null;
-
-export async function getDemoUser(): Promise<SafeUser> {
-  if (demoUserCache) return demoUserCache;
-  await ensureBootstrap().catch(() => {});
-  let [u] = await db.select().from(users).where(eq(users.email, DEMO_EMAIL)).limit(1);
-  if (!u) {
-    [u] = await db
-      .insert(users)
-      .values({
-        email: DEMO_EMAIL,
-        name: "Portinel Admin",
-        role: "admin",
-        plan: "enterprise",
-        title: "Platform Administrator",
-        company: "Portinel",
-        avatarColor: "#a855f7",
-        passwordHash: "supabase-auth",
-      })
-      .returning();
-  }
-  demoUserCache = mapUser(u, "demo");
-  return demoUserCache;
-}
-
-// ---------------------------------------------------------------------------
-// Sync a Supabase auth user into our local users table.
-// ---------------------------------------------------------------------------
-async function syncSupabaseUser(supabaseUser: {
-  id: string;
-  email: string;
-  user_metadata?: Record<string, unknown>;
-  created_at?: string;
-  last_sign_in_at?: string | null;
-}): Promise<SafeUser | null> {
-  const meta = supabaseUser.user_metadata || {};
-  const role = (meta.role as string) || "viewer";
-  const name = (meta.name as string) || (meta.full_name as string) || supabaseUser.email.split("@")[0];
-
-  // Upsert into local DB.
-  const [existing] = await db.select().from(users).where(eq(users.id, supabaseUser.id)).limit(1);
-  if (existing) {
-    // Update last login, keep role from DB if already set by admin.
-    const [updated] = await db
-      .update(users)
-      .set({
-        email: supabaseUser.email,
-        name: meta.name ? (meta.name as string) : existing.name,
-        lastLoginAt: supabaseUser.last_sign_in_at ? new Date(supabaseUser.last_sign_in_at) : new Date(),
-      })
-      .where(eq(users.id, supabaseUser.id))
-      .returning();
-    return mapUser(updated);
-  }
-
-  // New user — create local profile.
-  const colors = ["#22d3ee", "#818cf8", "#a855f7", "#34d399", "#fb7185", "#fbbf24"];
-  const [created] = await db
-    .insert(users)
-    .values({
-      id: supabaseUser.id,
-      email: supabaseUser.email,
-      name,
-      role,
-      plan: "free",
-      title: (meta.title as string) || null,
-      company: (meta.company as string) || null,
-      avatarColor: (meta.avatarColor as string) || colors[Math.floor(Math.random() * colors.length)],
-      passwordHash: "supabase-auth",
-    })
-    .returning();
-  return mapUser(created);
-}
-
-// ---------------------------------------------------------------------------
-// Get the current authenticated user (Supabase → demo fallback)
-// ---------------------------------------------------------------------------
 export async function getCurrentUser(): Promise<SafeUser | null> {
-  // Try Supabase Auth session first.
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = await getSupabaseServer();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const local = await syncSupabaseUser({
-          id: user.id,
-          email: user.email || "",
-          user_metadata: user.user_metadata as Record<string, unknown>,
-          created_at: user.created_at,
-          last_sign_in_at: user.last_sign_in_at,
-        });
-        if (local && local.status === "active") return local;
-        if (local && local.status !== "active") return null; // suspended
-      }
-    } catch {
-      /* Supabase error — fall through to demo */
-    }
-  }
-
-  // Fallback: demo bypass mode (disabled in production).
-  if (DEMO_BYPASS) return getDemoUser();
-  // No session — unauthenticated.
-  return null;
+  const store = await cookies();
+  const token = store.get(COOKIE_NAME)?.value;
+  if (!token) return null;
+  const claims = await verifyToken(token);
+  if (!claims) return null;
+  const [u] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, claims.sub))
+    .limit(1);
+  if (!u || u.status !== "active") return null;
+  return mapUser(u);
 }
 
 export async function requireUser(redirectTo = "/login"): Promise<SafeUser> {
@@ -179,11 +84,27 @@ export async function requireAdmin(): Promise<SafeUser> {
   return requireRole("admin");
 }
 
-/** Check a permission against the current user's role. */
 export async function requirePermission(permission: Permission): Promise<SafeUser> {
   const u = await requireUser();
   if (!hasPermission(u.role, permission)) redirect("/dashboard");
   return u;
+}
+
+export async function setSessionCookie(claims: SessionClaims): Promise<void> {
+  const token = await createSessionToken(claims);
+  const store = await cookies();
+  store.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+export async function clearSessionCookie(): Promise<void> {
+  const store = await cookies();
+  store.delete(COOKIE_NAME);
 }
 
 export async function getRequestIp(): Promise<string> {
@@ -195,7 +116,7 @@ export async function getRequestIp(): Promise<string> {
   );
 }
 
-// Authenticate an API request via Supabase session OR X-API-Key header.
+// Authenticate an API request via session cookie OR X-API-Key header.
 export async function authenticateRequest(
   req: Request,
 ): Promise<{ user: SafeUser | null; via: "session" | "apikey" | "none" }> {

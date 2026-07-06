@@ -1,25 +1,13 @@
 // ============================================================================
-// middleware.ts — Authentication gate + Supabase session refresh.
+// middleware.ts — LOCAL auth gate (master branch, no Supabase).
 //
-// Production mode: unauthenticated requests to protected routes are redirected
-// to /login. Public routes (landing, login, shared reports, health) are allowed.
+// Verifies the local JWT cookie. Unauthenticated requests to protected routes
+// are redirected to /login. Public routes pass through.
 // ============================================================================
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { COOKIE_NAME, verifyToken } from "@/lib/auth";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
-
-const DEMO_BYPASS = false;
-
-// Routes that don't require authentication.
-const PUBLIC_ROUTES = [
-  "/login",
-  "/register",
-  "/api/auth/login",
-  "/api/auth/register",
-  "/api/health",
-];
+const PUBLIC_ROUTES = ["/login", "/register", "/api/auth/login", "/api/auth/register", "/api/health"];
 const PUBLIC_PREFIXES = ["/r/", "/api/health"];
 
 function isPublicRoute(pathname: string): boolean {
@@ -30,40 +18,9 @@ function isPublicRoute(pathname: string): boolean {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  let res = NextResponse.next({
-    request: { headers: req.headers },
-  });
-
-  // If Supabase is not configured, fall back to permissive mode (app-level
-  // auth in session.ts handles it). This keeps the app bootable.
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || DEMO_BYPASS) {
-    return res;
-  }
-
-  // Refresh Supabase session cookies.
-  let hasSession = false;
-  try {
-    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            req.cookies.set(name, value);
-            res.cookies.set(name, value, options);
-          });
-        },
-      },
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    hasSession = !!user;
-  } catch {
-    /* ignore — treat as unauthenticated */
-  }
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  const claims = token ? await verifyToken(token) : null;
+  const hasSession = !!claims;
 
   const isPublic = isPublicRoute(pathname);
 
@@ -89,11 +46,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  const res = NextResponse.next();
+  if (claims) res.headers.set("x-portinel-user", claims.sub);
   return res;
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

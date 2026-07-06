@@ -17,6 +17,7 @@ export default function LandingPage() {
             <a href="#how" className="transition hover:text-ink">How it works</a>
           </nav>
           <div className="flex items-center gap-2">
+            <Link href="/register" className="btn btn-ghost">Get started</Link>
             <Link href="/login" className="btn btn-primary">Sign in</Link>
           </div>
         </div>
@@ -42,8 +43,11 @@ export default function LandingPage() {
             let AI prioritize the risks that matter.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/login" className="btn btn-primary px-6 py-3 text-base">
-              Sign in to dashboard
+            <Link href="/register" className="btn btn-primary px-6 py-3 text-base">
+              Get started free
+            </Link>
+            <Link href="/login" className="btn btn-ghost px-6 py-3 text-base">
+              Sign in
             </Link>
           </div>
 

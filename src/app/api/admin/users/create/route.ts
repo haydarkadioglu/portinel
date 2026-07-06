@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { db } from "@/db";
+import { users, auditLogs } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/session";
-import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase-clients";
+import { hashPassword } from "@/lib/auth";
 import { ROLES, isValidRole } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +18,6 @@ const schema = z.object({
   company: z.string().max(80).optional(),
 });
 
-// GET: return available roles for the admin form.
 export async function GET() {
   await requireAdmin();
   return NextResponse.json({ roles: ROLES });
@@ -28,38 +30,35 @@ export async function POST(req: NextRequest) {
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
 
-  if (!isSupabaseConfigured())
-    return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
+  const [existing] = await db.select().from(users).where(eq(users.email, parsed.data.email)).limit(1);
+  if (existing)
+    return NextResponse.json({ error: "An account with that email already exists." }, { status: 409 });
 
-  const supabaseAdmin = getSupabaseAdmin();
-  if (!supabaseAdmin)
-    return NextResponse.json({
-      error: "SUPABASE_SERVICE_ROLE_KEY is required for user management. Set it in .env to create Supabase Auth users.",
-    }, { status: 503 });
-
-  try {
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  const colors = ["#22d3ee", "#818cf8", "#a855f7", "#34d399", "#fb7185", "#fbbf24"];
+  const [user] = await db
+    .insert(users)
+    .values({
       email: parsed.data.email,
-      password: parsed.data.password,
-      email_confirm: true, // skip email verification
-      user_metadata: {
-        name: parsed.data.name,
-        role: parsed.data.role,
-        title: parsed.data.title || null,
-        company: parsed.data.company || null,
-      },
-    });
+      passwordHash: hashPassword(parsed.data.password),
+      name: parsed.data.name,
+      role: parsed.data.role,
+      title: parsed.data.title || null,
+      company: parsed.data.company || null,
+      avatarColor: colors[Math.floor(Math.random() * colors.length)],
+    })
+    .returning();
 
-    if (error || !data.user)
-      return NextResponse.json({ error: error?.message || "Failed to create user." }, { status: 422 });
+  await db.insert(auditLogs).values({
+    userId: admin.id,
+    action: "user.create",
+    resource: "user",
+    resourceId: user.id,
+    status: "success",
+    metadata: { email: parsed.data.email, role: parsed.data.role },
+  });
 
-    return NextResponse.json({
-      user: { id: data.user.id, email: data.user.email },
-      message: `Account created for ${parsed.data.email} with role "${parsed.data.role}". They can now sign in.`,
-    }, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({
-      error: err instanceof Error ? err.message : "User creation failed.",
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    user: { id: user.id, email: user.email },
+    message: `Account created for ${parsed.data.email} with role "${parsed.data.role}".`,
+  }, { status: 201 });
 }

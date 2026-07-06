@@ -2,17 +2,12 @@ services:
   app:
     build:
       context: .
-      args:
-        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-        - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
     ports:
       - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/portinel
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
       - AUTH_SECRET=${AUTH_SECRET:-portinel-secret}
+      - NODE_ENV=production
     depends_on:
       db:
         condition: service_healthy

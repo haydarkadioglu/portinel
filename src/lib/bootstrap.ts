@@ -1,18 +1,40 @@
 // ============================================================================
-// bootstrap.ts — Production initialization.
+// bootstrap.ts — Local initialization (master branch).
 //
-// With Supabase Auth, users are no longer seeded locally — they're created
-// automatically on first login via syncSupabaseUser(). This module now just
-// ensures the scheduler starts and the database is reachable.
+// Seeds a default admin account on first run so the platform is immediately
+// usable after `docker compose up`. No Supabase dependency.
 // ============================================================================
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { hashPassword } from "./auth";
 import { startScheduler } from "./scheduler";
 
-let initialised = false;
+let bootstrapped: Promise<void> | null = null;
 
-/** Ensure background services (scheduler) are running. Idempotent. */
 export function ensureBootstrap(): Promise<void> {
-  if (initialised) return Promise.resolve();
-  initialised = true;
+  if (!bootstrapped) {
+    bootstrapped = (async () => {
+      try {
+        const existing = await db.select().from(users).limit(1);
+        if (existing.length > 0) return;
+
+        await db.insert(users).values({
+          email: "admin@portinel.io",
+          name: "Portinel Admin",
+          passwordHash: hashPassword("Portinel!Admin2026"),
+          role: "admin",
+          plan: "enterprise",
+          title: "Platform Administrator",
+          company: "Portinel",
+          avatarColor: "#a855f7",
+        });
+        console.log("[bootstrap] Created default admin: admin@portinel.io / Portinel!Admin2026");
+      } catch (err) {
+        console.error("[bootstrap] failed:", err);
+      }
+    })();
+  }
   startScheduler();
-  return Promise.resolve();
+  return bootstrapped;
 }

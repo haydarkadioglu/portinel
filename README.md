@@ -95,7 +95,6 @@ Portinel maps your attack surface across 17+ reconnaissance modules, matches fin
 ### Prerequisites
 - Node.js 20+
 - PostgreSQL 14+
-- A Supabase project (for auth)
 
 ### 1. Install dependencies
 ```bash
@@ -108,17 +107,8 @@ cp .env.example .env
 ```
 Edit `.env`:
 ```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/portinel
-
-# Supabase (Authentication)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
-
-# Optional: for admin user management (create/delete users)
-SUPABASE_SERVICE_ROLE_KEY=eyJxxx
-
-# Optional: AI providers (without these, the built-in rule engine is used)
-# Configure via Admin Panel → AI Providers instead
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app_db
+AUTH_SECRET=your-random-secret-string
 ```
 
 ### 3. Set up the database
@@ -133,11 +123,12 @@ npm run build  # production build
 npm run start  # production server
 ```
 
-### 5. Create your first admin user
-1. Go to your **Supabase Dashboard → Authentication → Users → Add user**
-2. Set email + password, confirm the user
-3. Add **User Metadata**: `{"role": "admin", "name": "Your Name"}`
-4. Navigate to your app's `/login` and sign in
+### 5. Login
+A default admin account is auto-created on first run:
+- **Email:** `admin@portinel.io`
+- **Password:** `Portinel!Admin2026`
+
+Change it immediately from **Settings → Profile**.
 
 ---
 

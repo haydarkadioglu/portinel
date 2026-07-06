@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/session";
-import { getSupabaseAdmin } from "@/lib/supabase-clients";
 import { isValidRole } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
@@ -35,16 +34,6 @@ export async function PATCH(
 
   // Update local DB.
   await db.update(users).set(patch).where(eq(users.id, id));
-
-  // Sync role to Supabase user_metadata (best-effort).
-  if (parsed.data.role) {
-    const supabaseAdmin = getSupabaseAdmin();
-    if (supabaseAdmin) {
-      await supabaseAdmin.auth.admin.updateUserById(id, {
-        user_metadata: { role: parsed.data.role },
-      }).catch(() => {});
-    }
-  }
 
   return NextResponse.json({ ok: true, by: admin.id });
 }
