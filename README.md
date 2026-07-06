@@ -1,141 +1,132 @@
-# 🛡️ Portinel
+# 🛡️ Portinel — Local Edition
 
-**Production-grade cyber reconnaissance platform** — port scanning, SSL/TLS analysis, HTTP fingerprinting, subdomain enumeration, CVE intelligence, and AI-powered analysis. All in one polished dark-mode dashboard.
-
-> **This is the local/Docker edition.** No external services required — runs entirely on your machine with PostgreSQL. No login needed.
+**Production-grade cyber reconnaissance platform** — runs entirely on your machine. No login, no cloud services, no Supabase. Just clone, run, and scan.
 
 ---
 
-## ✨ Features
+## 🚀 Quick Start
 
-### Reconnaissance Engine (17+ modules)
-- **Port Scanning** — TCP connect with banner grabbing, version detection, open/closed/filtered states
-- **SSL/TLS Analysis** — certificates, ciphers, TLS versions, weak-config detection, letter grade
-- **HTTP Fingerprinting** — headers, redirects, cookies, server/framework/CMS detection
-- **DNS Analysis** — full record enumeration + zone-transfer (AXFR) testing
-- **Subdomain Discovery** — Certificate Transparency (crt.sh + CertSpotter + HackerTarget) + DNS brute-force with wildcard detection
-- **WAF Detection** — Cloudflare, AWS WAF, Akamai, Sucuri, Imperva & more
-- **Web Recon** — robots.txt, sitemap, directory brute-force, source-code disclosure, CORS audit
-- **CVE Intelligence** — detected products matched against local vulnerability database (CVSS + exploit info)
-- **OS Detection** — heuristic host fingerprinting
-- **WHOIS / RDNS / Geolocation**
-
-### AI Layer
-- **Multi-provider LLM** — OpenRouter + DeepSeek + built-in rule-engine fallback
-- **Conversational assistant** — explains findings, suggests exploit paths, gives remediation plans
-- **Autonomous agent** — AI can launch sub-scans and invoke MCP tools automatically
-- **CTF Toolkit** — decoders, ciphers, hash tools, JWT analysis, XOR
-
-### Platform
-- **Scan trees** — drill into subdomains/paths as nested child scans
-- **Live progress** — real-time SSE streaming
-- **Background workers** — async scan execution
-- **MCP connectors** — connect external tool servers (SSE transport)
-- **VPN tunnels** — OpenVPN config upload for in-LAN scanning
-- **Scheduled scans** — recurring reconnaissance with diff notifications
-- **Webhooks** — Slack/Discord notifications
-- **Reporting** — Markdown, JSON, CSV, shareable links, print/PDF
-- **Desktop SDK** — zero-dependency TypeScript API client
-
----
-
-## 🚀 Quick Start (Local)
-
-### Prerequisites
-- Node.js 20+
-- PostgreSQL 14+
-
-### Option A: Run directly
+### Option A: Docker (recommended — zero setup)
 
 ```bash
-# 1. Clone
-git clone https://github.com/haydarkadioglu/portinel.git
+git clone -b master https://github.com/haydarkadioglu/portinel.git
 cd portinel
 
-# 2. Install
-npm install
-
-# 3. Configure
-cp .env.example .env
-# Edit .env — set DATABASE_URL and AUTH_SECRET
-
-# 4. Database setup
-npx drizzle-kit push --force
-
-# 5. Run
-npm run dev    # → http://localhost:3000
-```
-
-That's it. Open `http://localhost:3000/dashboard` — **no login required**.
-
-### Option B: Docker (recommended)
-
-```bash
-git clone https://github.com/haydarkadioglu/portinel.git
-cd portinel
-
-# Create .env (minimum required)
+# Set your config
 cat > .env << 'EOF'
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app_db
-AUTH_SECRET=change-this-to-random-string
+AUTH_SECRET=any-random-string
 EOF
 
-# Build and run (app + postgres)
+# Launch (app + postgres)
 docker compose up -d
 
 # Apply database schema
 docker compose exec app npx drizzle-kit push --force
 ```
 
-App runs on `http://localhost:3000`. PostgreSQL on port 5432.
+Open **http://localhost:3000/dashboard** — no login needed.
+
+### Option B: Run locally
+
+```bash
+git clone -b master https://github.com/haydarkadioglu/portinel.git
+cd portinel
+
+# 1. Install
+npm install
+
+# 2. Configure
+cp .env.example .env
+# Set DATABASE_URL and AUTH_SECRET
+
+# 3. Database
+npx drizzle-kit push --force
+
+# 4. Run
+npm run dev    # → http://localhost:3000
+```
+
+Open **http://localhost:3000/dashboard** — you're in immediately.
 
 ---
 
 ## 🔑 AI API Key Setup
 
-The AI assistant works out-of-the-box with the **built-in rule engine** (no API key needed). To use a real LLM:
+The AI assistant works out-of-the-box with the **built-in rule engine** (no key needed). To use a real LLM:
 
-### Via Dashboard
-1. Open the dashboard → **Admin Panel** (top nav)
-2. Go to **🤖 AI Providers** tab
-3. Choose a provider:
+1. Open **Admin Panel → 🤖 AI Providers**
+2. Add a key:
 
-#### OpenRouter (recommended — access many models)
-1. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys)
-2. Paste it in the **OpenRouter** card
-3. Pick a model (e.g. `deepseek/deepseek-chat`, `openai/gpt-4o-mini`, `anthropic/claude-3.5-sonnet`)
-4. Click **Test** to verify the connection
-5. Set OpenRouter as **Active provider**
-6. **Save configuration**
+| Provider | Where to get a key | Default model |
+|----------|-------------------|---------------|
+| **OpenRouter** | [openrouter.ai/keys](https://openrouter.ai/keys) | `deepseek/deepseek-chat` |
+| **DeepSeek** | [platform.deepseek.com](https://platform.deepseek.com/api_keys) | `deepseek-chat` |
 
-#### DeepSeek (direct API)
-1. Get a key at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
-2. Paste it in the **DeepSeek** card
-3. Model: `deepseek-chat` or `deepseek-reasoner`
-4. **Test** → set as Active → **Save**
+3. Click **Test** to verify the connection
+4. Set as **Active provider** → **Save**
 
-### Fallback chain
-The assistant tries the **active** provider first, then the **fallback**, then the built-in engine. You'll never get an empty answer.
+**Fallback chain:** active provider → fallback → built-in engine. You'll always get an answer.
 
 ---
 
-## ⚙️ Configuration (.env)
+## ✨ Features
+
+### Reconnaissance Engine (17+ modules)
+- **Port Scanning** — TCP connect, banner grabbing, version detection, open/closed/filtered
+- **SSL/TLS Analysis** — certificates, ciphers, TLS versions, weak-config detection, letter grade
+- **HTTP Fingerprinting** — headers, redirects, cookies, server/framework/CMS detection
+- **DNS Analysis** — full enumeration + zone-transfer (AXFR) testing
+- **Subdomain Discovery** — CT logs (crt.sh + CertSpotter + HackerTarget) + DNS brute-force (200+ wordlist)
+- **WAF Detection** — Cloudflare, AWS WAF, Akamai, Sucuri, Imperva & more
+- **Web Recon** — robots.txt, sitemap, directory brute-force, source disclosure, CORS audit
+- **CVE Intelligence** — local vulnerability database (CVSS + exploit info)
+- **OS Detection**, **WHOIS/RDAP**, **Geolocation**
+
+### AI Layer
+- **Multi-provider LLM** — OpenRouter + DeepSeek + rule-engine fallback
+- **Conversational assistant** — explains findings, suggests exploits, remediation
+- **Autonomous agent** — AI launches sub-scans and invokes MCP tools
+- **CTF Toolkit** — decoders, ciphers, hash tools, JWT, XOR
+
+### Platform
+- **No login required** — works immediately
+- **Scan trees** — drill into subdomains/paths as nested child scans
+- **Live SSE progress** — real-time scan streaming
+- **Background workers** — async scan execution
+- **MCP connectors** — connect external tool servers (SSE transport)
+- **VPN tunnels** — OpenVPN configs for in-LAN scanning
+- **Scheduled scans** + **webhooks**
+- **Reporting** — Markdown, JSON, CSV, shareable links, PDF
+- **Desktop SDK** — zero-dependency TypeScript API client
+
+---
+
+## ⚙️ Configuration
+
+### `.env`
 
 ```env
 # Required
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app_db
-AUTH_SECRET=any-random-string-here
-
-# Optional: AI providers can be configured via Admin Panel instead
+AUTH_SECRET=any-random-string
 ```
 
-No Supabase, no external auth, no cloud services required.
+That's it. No Supabase, no external auth, no cloud required.
+
+### Docker
+
+```bash
+docker compose up -d      # start
+docker compose down       # stop
+docker compose logs -f    # view logs
+```
+
+Data persists in the `portinel-db` Docker volume.
 
 ---
 
-## 📡 API
-
-All endpoints work with the built-in session (no auth header needed in local mode).
+## 📡 API (no auth header needed)
 
 ```bash
 # Start a scan
@@ -155,7 +146,7 @@ curl -X POST http://localhost:3000/api/chat \
   -d '{"scanId":"<SCAN_ID>","question":"What is critical?"}'
 ```
 
-For programmatic access, use the included SDK (`src/lib/portinel-sdk.ts`).
+For programmatic access, use the included SDK: `src/lib/portinel-sdk.ts`.
 
 ---
 
@@ -190,5 +181,4 @@ src/
 ---
 
 ## 📄 License
-
 Proprietary — All rights reserved.
