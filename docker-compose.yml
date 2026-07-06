@@ -6,7 +6,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/portinel
-      - AUTH_SECRET=${AUTH_SECRET:-portinel-secret}
+      - AUTH_SECRET=${AUTH_SECRET:-portinel-secret-change-in-prod}
       - NODE_ENV=production
     depends_on:
       db:

@@ -1,228 +1,161 @@
 # 🛡️ Portinel
 
-**Production-grade cyber reconnaissance platform** — a modern fusion of Shodan, Censys, VirusTotal and Nmap with an AI-powered analysis layer.
+**Production-grade cyber reconnaissance platform** — port scanning, SSL/TLS analysis, HTTP fingerprinting, subdomain enumeration, CVE intelligence, and AI-powered analysis. All in one polished dark-mode dashboard.
 
-Portinel maps your attack surface across 17+ reconnaissance modules, matches findings against a local CVE database, and lets an AI assistant explain, prioritize, and even autonomously drill into subdomains — all from a polished dark-mode dashboard.
+> **This is the local/Docker edition.** No external services required — runs entirely on your machine with PostgreSQL. No login needed.
 
 ---
 
 ## ✨ Features
 
-### Reconnaissance Engine
-| Module | What it does |
-|--------|-------------|
-| **Port Scanning** | TCP connect scanning with banner grabbing, version detection, open/closed/filtered classification |
-| **SSL/TLS Analysis** | Certificate chain, expiry, cipher suites, TLS version negotiation, weak-config detection, letter grade |
-| **HTTP Fingerprinting** | Headers, redirects, cookies, compression, server & framework detection, CMS identification |
-| **DNS Analysis** | Full record enumeration (A/AAAA/MX/NS/TXT/SOA/CAA/CNAME), zone-transfer (AXFR) testing |
-| **Subdomain Discovery** | Certificate Transparency (crt.sh) + CertSpotter + HackerTarget passive OSINT + DNS brute-force (200+ wordlist) with wildcard detection |
-| **WAF Detection** | Cloudflare, AWS WAF, Akamai, Sucuri, Imperva, F5, Azure, Fastly & more |
-| **Web Recon** | robots.txt, sitemap.xml, security.txt, directory brute-force, source-code disclosure, CORS audit, HTTP methods, favicon hash |
-| **WHOIS / RDNS** | Domain registration via RDAP, reverse DNS lookups |
-| **OS Detection** | Heuristic host fingerprinting from service banners & headers |
-| **CVE Intelligence** | Detected products+versions matched against a curated vulnerability database (CVSS scores, exploit availability) |
-| **Geolocation** | IP geo-enrichment with city/country/ASN/ISP |
+### Reconnaissance Engine (17+ modules)
+- **Port Scanning** — TCP connect with banner grabbing, version detection, open/closed/filtered states
+- **SSL/TLS Analysis** — certificates, ciphers, TLS versions, weak-config detection, letter grade
+- **HTTP Fingerprinting** — headers, redirects, cookies, server/framework/CMS detection
+- **DNS Analysis** — full record enumeration + zone-transfer (AXFR) testing
+- **Subdomain Discovery** — Certificate Transparency (crt.sh + CertSpotter + HackerTarget) + DNS brute-force with wildcard detection
+- **WAF Detection** — Cloudflare, AWS WAF, Akamai, Sucuri, Imperva & more
+- **Web Recon** — robots.txt, sitemap, directory brute-force, source-code disclosure, CORS audit
+- **CVE Intelligence** — detected products matched against local vulnerability database (CVSS + exploit info)
+- **OS Detection** — heuristic host fingerprinting
+- **WHOIS / RDNS / Geolocation**
 
 ### AI Layer
-- **Multi-provider LLM** — OpenRouter + DeepSeek + deterministic rule-engine fallback chain
-- **Conversational assistant** — explains findings, suggests exploitation paths, gives remediation plans
-- **Autonomous agent** — the AI can launch sub-scans, list findings/ports/subdomains, and invoke connected MCP tools
-- **Persistent chat memory** — conversations survive page reloads (stored in DB)
-- **Executive summaries** — auto-generated briefings for technical & non-technical audiences
+- **Multi-provider LLM** — OpenRouter + DeepSeek + built-in rule-engine fallback
+- **Conversational assistant** — explains findings, suggests exploit paths, gives remediation plans
+- **Autonomous agent** — AI can launch sub-scans and invoke MCP tools automatically
+- **CTF Toolkit** — decoders, ciphers, hash tools, JWT analysis, XOR
 
 ### Platform
-- **Scan trees** — drill into subdomains, login pages, paths as nested child scans
-- **Live progress** — real-time SSE streaming of scan stages
-- **Background workers** — async scan execution with queue semantics
-- **RBAC** — admin, pentester, analyst, viewer roles with granular permissions
-- **Supabase Auth** — invite-only, cookie-based SSR sessions
-- **API keys** — hashed at rest, rate-limited, for programmatic access
-- **MCP connectors** — connect external tool servers (SSE transport), auto-discover tools, invoke from chat
-- **CTF Toolkit** — CyberChef-style multi-tool (decoders, ciphers, hash, JWT, XOR, base converter)
-- **VPN tunnels** — OpenVPN config upload (encrypted at rest) for in-LAN scanning
-- **Scheduled scans** — recurring reconnaissance with diff-based notifications
-- **Webhooks** — Slack/Discord/custom notifications on scan completion
-- **Reporting** — Markdown, JSON, CSV exports, shareable links, print/PDF
-- **Admin panel** — user management, AI provider config, audit logs, platform stats
+- **Scan trees** — drill into subdomains/paths as nested child scans
+- **Live progress** — real-time SSE streaming
+- **Background workers** — async scan execution
+- **MCP connectors** — connect external tool servers (SSE transport)
+- **VPN tunnels** — OpenVPN config upload for in-LAN scanning
+- **Scheduled scans** — recurring reconnaissance with diff notifications
+- **Webhooks** — Slack/Discord notifications
+- **Reporting** — Markdown, JSON, CSV, shareable links, print/PDF
+- **Desktop SDK** — zero-dependency TypeScript API client
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                    Next.js 16 (App Router)            │
-│                                                       │
-│  ┌─────────┐  ┌──────────┐  ┌──────────────────────┐ │
-│  │ React UI │  │ REST API │  │  SSE Stream / Chat   │ │
-│  │ (Tailwind│  │ /api/*   │  │  /api/scans/:id/stream│ │
-│  │  v4)     │  │ /api/v1/*│  │  /api/chat           │ │
-│  └────┬─────┘  └────┬─────┘  └──────────┬───────────┘ │
-│       │              │                    │             │
-│  ┌────▼──────────────▼────────────────────▼──────────┐ │
-│  │              Service Layer (src/lib/)              │ │
-│  │                                                    │ │
-│  │  scanner.ts    →  TCP/DNS/TLS/HTTP engine         │ │
-│  │  ai.ts         →  Risk scoring + analysis         │ │
-│  │  llm.ts        →  Multi-provider LLM + tool-calling│ │
-│  │  mcp.ts        →  MCP SSE client + tool registry  │ │
-│  │  scan-service  →  Orchestration + persistence     │ │
-│  │  rbac.ts       →  Role-based access control       │ │
-│  │  cve-db.ts     →  Vulnerability database          │ │
-│  │  ctf.ts        →  CTF/crypto toolkit              │ │
-│  └────────────────────┬──────────────────────────────┘ │
-│                       │                                │
-│  ┌────────────────────▼──────────────────────────────┐ │
-│  │           Data Layer (Drizzle ORM)                │ │
-│  │  PostgreSQL (local)  +  Supabase (auth + mirror)  │ │
-│  └───────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────┘
-```
-
-### Tech Stack
-- **Framework:** Next.js 16 (App Router, Server Components, Route Handlers)
-- **Database:** PostgreSQL + Drizzle ORM (local), Supabase (auth + data mirror)
-- **Auth:** Supabase Auth (`@supabase/ssr`), invite-only, RBAC roles
-- **Styling:** Tailwind CSS v4 with custom design tokens
-- **AI:** OpenRouter / DeepSeek (OpenAI-compatible), deterministic fallback
-- **Real-time:** Server-Sent Events (SSE)
-- **Language:** TypeScript (strict mode)
-
----
-
-## 🚀 Quick Start
+## 🚀 Quick Start (Local)
 
 ### Prerequisites
 - Node.js 20+
 - PostgreSQL 14+
 
-### 1. Install dependencies
+### Option A: Run directly
+
 ```bash
+# 1. Clone
+git clone https://github.com/haydarkadioglu/portinel.git
+cd portinel
+
+# 2. Install
 npm install
-```
 
-### 2. Configure environment
-```bash
+# 3. Configure
 cp .env.example .env
-```
-Edit `.env`:
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app_db
-AUTH_SECRET=your-random-secret-string
-```
+# Edit .env — set DATABASE_URL and AUTH_SECRET
 
-### 3. Set up the database
-```bash
+# 4. Database setup
 npx drizzle-kit push --force
+
+# 5. Run
+npm run dev    # → http://localhost:3000
 ```
 
-### 4. Run
-```bash
-npm run dev    # development (http://localhost:3000)
-npm run build  # production build
-npm run start  # production server
-```
+That's it. Open `http://localhost:3000/dashboard` — **no login required**.
 
-### 5. Login
-A default admin account is auto-created on first run:
-- **Email:** `admin@portinel.io`
-- **Password:** `Portinel!Admin2026`
-
-Change it immediately from **Settings → Profile**.
-
----
-
-## 🐳 Docker Deployment
+### Option B: Docker (recommended)
 
 ```bash
-# Build and run everything (app + postgres)
+git clone https://github.com/haydarkadioglu/portinel.git
+cd portinel
+
+# Create .env (minimum required)
+cat > .env << 'EOF'
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app_db
+AUTH_SECRET=change-this-to-random-string
+EOF
+
+# Build and run (app + postgres)
 docker compose up -d
 
-# Or build just the app
-docker build -t portinel .
-docker run -p 3000:3000 --env-file .env portinel
+# Apply database schema
+docker compose exec app npx drizzle-kit push --force
 ```
 
-See [`docker-compose.yml`](./docker-compose.yml) for the full stack config.
+App runs on `http://localhost:3000`. PostgreSQL on port 5432.
 
 ---
 
-## 📡 API Documentation
+## 🔑 AI API Key Setup
 
-Portinel exposes a RESTful API. Authenticate via session cookie (browser) or `X-API-Key` header (`pt_live_...`).
+The AI assistant works out-of-the-box with the **built-in rule engine** (no API key needed). To use a real LLM:
 
-### Scans
-```http
-POST   /api/v1/scans                 # Launch a scan (async, returns 202)
-GET    /api/v1/scans                 # List scans (?limit=&target=)
-GET    /api/v1/scans/:id             # Get scan details
-GET    /api/v1/scans/:id/stream      # SSE live progress
-GET    /api/v1/scans/:id/export      # Export (?format=md|json|ports|findings)
-GET    /api/v1/scans/:id/tree        # Get scan tree (sub-scans)
-GET    /api/v1/scans/compare?a=&b=   # Compare two scans
+### Via Dashboard
+1. Open the dashboard → **Admin Panel** (top nav)
+2. Go to **🤖 AI Providers** tab
+3. Choose a provider:
+
+#### OpenRouter (recommended — access many models)
+1. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys)
+2. Paste it in the **OpenRouter** card
+3. Pick a model (e.g. `deepseek/deepseek-chat`, `openai/gpt-4o-mini`, `anthropic/claude-3.5-sonnet`)
+4. Click **Test** to verify the connection
+5. Set OpenRouter as **Active provider**
+6. **Save configuration**
+
+#### DeepSeek (direct API)
+1. Get a key at [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
+2. Paste it in the **DeepSeek** card
+3. Model: `deepseek-chat` or `deepseek-reasoner`
+4. **Test** → set as Active → **Save**
+
+### Fallback chain
+The assistant tries the **active** provider first, then the **fallback**, then the built-in engine. You'll never get an empty answer.
+
+---
+
+## ⚙️ Configuration (.env)
+
+```env
+# Required
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/app_db
+AUTH_SECRET=any-random-string-here
+
+# Optional: AI providers can be configured via Admin Panel instead
 ```
 
-### AI Chat
-```http
-POST   /api/chat                     # Ask the AI (?scanId=&question=)
-GET    /api/chat                     # Get suggested prompts
-```
+No Supabase, no external auth, no cloud services required.
 
-### MCP Connectors
-```http
-GET    /api/mcp                      # List connectors
-POST   /api/mcp                      # Add SSE MCP server
-POST   /api/mcp/:id                  # Connect/disconnect
-POST   /api/mcp/:id/call             # Invoke a tool
-GET    /api/mcp/:id/call             # Execution history
-```
+---
 
-### Example
+## 📡 API
+
+All endpoints work with the built-in session (no auth header needed in local mode).
+
 ```bash
-curl -X POST https://portinel.io/api/v1/scans \
-  -H "X-API-Key: pt_live_xxx" \
+# Start a scan
+curl -X POST http://localhost:3000/api/v1/scans \
   -H "Content-Type: application/json" \
   -d '{"target":"example.com","scanTypes":["deep"]}'
+
+# Check status
+curl http://localhost:3000/api/v1/scans/<SCAN_ID>
+
+# Export report
+curl http://localhost:3000/api/v1/scans/<SCAN_ID>/export?format=md
+
+# Ask the AI
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"scanId":"<SCAN_ID>","question":"What is critical?"}'
 ```
 
-### Desktop / SDK
-A zero-dependency TypeScript SDK is included at [`src/lib/portinel-sdk.ts`](./src/lib/portinel-sdk.ts). Copy it into any Electron/Tauri/CLI project:
-```typescript
-import { PortinelClient } from "./portinel-sdk";
-const client = new PortinelClient("https://portinel.io", "pt_live_xxx");
-const scan = await client.scans.create({ target: "example.com", scanTypes: ["deep"] });
-const result = await client.scans.waitFor(scan.id);
-const answer = await client.chat.ask(scan.id, "What's critical?");
-```
-
----
-
-## 👥 Roles & Permissions
-
-| Role | Description |
-|------|-------------|
-| **admin** | Full access — manage users, providers, all scans & settings |
-| **pentester** | Run scans, sub-scans, MCP tools, VPN, exports |
-| **analyst** | Run & view scans, generate reports |
-| **viewer** | Read-only access to scans and reports |
-
-Self-registration is disabled (invite-only). Admins create accounts via the Admin Panel or Supabase Dashboard.
-
----
-
-## 🔧 Configuration
-
-### AI Providers
-Navigate to **Admin Panel → AI Providers** to configure:
-- **OpenRouter** — supports GPT-4o, Claude, Gemini, Llama, DeepSeek and more
-- **DeepSeek** — direct API access
-- **Routing** — active provider → fallback → built-in engine
-
-### MCP Servers
-Navigate to **MCP Connectors** to connect external tool servers (SSE transport). Connected tools become available to the AI assistant automatically.
-
-### VPN Tunnels
-Navigate to **VPN Tunnels** to upload OpenVPN `.ovpn` profiles (encrypted at rest with AES-256-GCM) for scanning inside target LANs.
+For programmatic access, use the included SDK (`src/lib/portinel-sdk.ts`).
 
 ---
 
@@ -230,45 +163,29 @@ Navigate to **VPN Tunnels** to upload OpenVPN `.ovpn` profiles (encrypted at res
 
 ```
 src/
-├── app/                      # Next.js App Router
-│   ├── api/                  # REST API routes
-│   │   ├── v1/               # Public versioned API
-│   │   ├── admin/            # Admin-only endpoints
-│   │   ├── chat/             # AI assistant
-│   │   ├── mcp/              # MCP connectors
-│   │   └── scans/            # Scan CRUD + SSE + tree + export
-│   ├── dashboard/            # Authenticated UI
-│   │   ├── scans/            # Scan management + results
-│   │   ├── admin/            # Admin panel
-│   │   ├── connectors/       # MCP management
-│   │   ├── vpn/              # VPN tunnel management
-│   │   └── settings/         # Profile + API keys + webhooks
+├── app/                      # Next.js App Router (pages + API routes)
+│   ├── api/                  # REST API + SSE + chat + MCP
+│   ├── dashboard/            # Main UI
 │   └── r/[token]/            # Public shareable reports
 ├── components/               # React components
-├── lib/                      # Business logic
+├── lib/                      # Core logic
 │   ├── scanner.ts            # Reconnaissance engine
-│   ├── ai.ts                 # Risk scoring & analysis
-│   ├── llm.ts                # Multi-provider LLM + tool-calling
+│   ├── llm.ts                # Multi-provider LLM + agent
 │   ├── mcp.ts                # MCP SSE client
 │   ├── cve-db.ts             # Vulnerability database
 │   ├── ctf.ts                # CTF/crypto toolkit
-│   ├── rbac.ts               # Role-based access control
-│   ├── portinel-sdk.ts       # Standalone API client SDK
-│   └── ...
-└── db/                       # Drizzle schema + connection
+│   └── portinel-sdk.ts       # Standalone API client
+└── db/                       # Drizzle ORM schema
 ```
 
 ---
 
-## 🛡️ Security
-
-- **SSRF protection** — cloud metadata, loopback, link-local addresses blocked
-- **Input validation** — Zod schemas on all API routes
-- **Rate limiting** — token-bucket per user/IP
-- **Encrypted secrets** — API keys & VPN configs encrypted at rest (AES-256-GCM)
-- **Audit logs** — all sensitive actions logged
-- **RBAC** — granular permission checks on every endpoint
-- **Invite-only** — no self-registration
+## 🛡️ Security Features
+- SSRF protection (blocks metadata/loopback/link-local)
+- Input validation (Zod on all routes)
+- Rate limiting (token-bucket)
+- Encrypted secrets at rest (AES-256-GCM)
+- CVE/exploit intelligence
 
 ---
 

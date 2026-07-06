@@ -53,19 +53,54 @@ function mapUser(u: typeof users.$inferSelect): SafeUser {
   };
 }
 
+// Demo bypass — when true, anonymous requests authenticate as the default admin.
+// Master branch: always on so the platform works without login.
+export const DEMO_BYPASS = true;
+const DEMO_EMAIL = "admin@portinel.io";
+
+let demoUserCache: SafeUser | null = null;
+
+export async function getDemoUser(): Promise<SafeUser> {
+  if (demoUserCache) return demoUserCache;
+  await ensureBootstrap().catch(() => {});
+  let [u] = await db.select().from(users).where(eq(users.email, DEMO_EMAIL)).limit(1);
+  if (!u) {
+    [u] = await db
+      .insert(users)
+      .values({
+        email: DEMO_EMAIL,
+        name: "Portinel Admin",
+        passwordHash: hashPassword("Portinel!Admin2026"),
+        role: "admin",
+        plan: "enterprise",
+        title: "Platform Administrator",
+        company: "Portinel",
+        avatarColor: "#a855f7",
+      })
+      .returning();
+  }
+  demoUserCache = mapUser(u);
+  return demoUserCache;
+}
+
 export async function getCurrentUser(): Promise<SafeUser | null> {
+  // Try real session first.
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  const claims = await verifyToken(token);
-  if (!claims) return null;
-  const [u] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, claims.sub))
-    .limit(1);
-  if (!u || u.status !== "active") return null;
-  return mapUser(u);
+  if (token) {
+    const claims = await verifyToken(token);
+    if (claims) {
+      const [u] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, claims.sub))
+        .limit(1);
+      if (u && u.status === "active") return mapUser(u);
+    }
+  }
+  // Demo bypass: authenticate as default admin.
+  if (DEMO_BYPASS) return getDemoUser();
+  return null;
 }
 
 export async function requireUser(redirectTo = "/login"): Promise<SafeUser> {
