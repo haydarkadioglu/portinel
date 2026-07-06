@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui";
 
@@ -74,15 +73,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         {isRegister ? "Create account" : "Sign in"}
       </button>
       <p className="text-center text-sm text-muted">
-        {isRegister ? (
-          <>Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-brand">Sign in</Link>
-          </>
-        ) : (
-          <>New to Portinel?{" "}
-            <Link href="/register" className="font-semibold text-brand">Create an account</Link>
-          </>
-        )}
+        Access is managed by your administrator.
       </p>
     </form>
   );
