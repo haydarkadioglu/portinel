@@ -16,6 +16,8 @@ const DEMO_BYPASS = false;
 const PUBLIC_ROUTES = [
   "/login",
   "/register",
+  "/forgot-password",
+  "/reset-password",
   "/api/auth/login",
   "/api/auth/register",
   "/api/health",

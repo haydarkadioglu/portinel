@@ -119,6 +119,13 @@ export default function NewScanPage() {
         <p className="text-sm text-muted">Define a target and select the intelligence modules to run.</p>
       </div>
 
+      <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 text-xs leading-relaxed text-warning">
+        <span className="font-semibold block mb-1">⚠️ Legal & Ethical Disclaimer</span>
+        By launching this scan, you acknowledge that you have explicit authorization to probe the target system. 
+        Unauthorized scanning may violate computer misuse laws (such as the CFAA in the US or local cyber laws). 
+        You assume all liability and responsibility for any actions performed using this tool.
+      </div>
+
       <form onSubmit={onSubmit} className="panel space-y-6 p-6">
         <div>
           <label className="mb-1.5 block text-xs font-medium text-muted">Target</label>

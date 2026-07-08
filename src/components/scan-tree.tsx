@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { ScanRecord } from "@/lib/types";
-import { cn, riskColor } from "@/lib/utils";
+import { cn, riskColor, countDescendants } from "@/lib/utils";
 
 // Builds a parent->children map from a flat list of scans.
 function buildTree(scans: ScanRecord[], rootId: string): ScanRecord[] {
@@ -18,10 +18,7 @@ function buildTree(scans: ScanRecord[], rootId: string): ScanRecord[] {
   return children.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 }
 
-function countDescendants(scans: ScanRecord[], rootId: string): number {
-  const children = scans.filter((s) => s.parentId === rootId);
-  return children.length + children.reduce((acc, c) => acc + countDescendants(scans, c.id), 0);
-}
+
 
 export function ScanTree({
   scans,
@@ -99,4 +96,4 @@ function TreeNode({
   );
 }
 
-export { countDescendants };
+

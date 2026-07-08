@@ -2,6 +2,9 @@
 
 **Production-grade cyber reconnaissance platform** — port scanning, SSL/TLS analysis, HTTP fingerprinting, subdomain enumeration, CVE intelligence, and AI-powered analysis.
 
+> [!WARNING]
+> **LEGAL & ETHICAL DISCLAIMER (YASAL UYARI):** This tool is designed strictly for authorized penetration testing, security auditing, and educational research. The developers and owners of Portinel assume no liability for any misuse, damage, or unauthorized scanning conducted using this software. By using or deploying this platform, you assume full legal responsibility.
+
 > **This is the hosted/website edition (`production` branch).** Deployed on Vercel with Supabase Auth. Invite-only — admins create accounts.
 
 ---

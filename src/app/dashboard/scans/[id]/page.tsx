@@ -6,11 +6,11 @@ import { and, eq, lt, desc } from "drizzle-orm";
 import { requireUser } from "@/lib/session";
 import { getScan, toScanRecord, diffScans, getScanTree } from "@/lib/scan-service";
 import { ScanResults } from "@/components/scan-results";
-import { ScanTree, countDescendants } from "@/components/scan-tree";
+import { ScanTree } from "@/components/scan-tree";
 import { SubscanLauncher } from "@/components/subscan-launcher";
 import { Card, SectionTitle, EmptyState } from "@/components/ui";
 import { Timeline } from "@/components/charts";
-import { formatDateTime, riskColor } from "@/lib/utils";
+import { formatDateTime, riskColor, countDescendants } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

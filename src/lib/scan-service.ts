@@ -14,7 +14,9 @@ import { checkAndNotify } from "./notifications";
 import { fireWebhooksForScan } from "./webhooks";
 import type { ScanRecord, ScanResult, ScanType, TargetType } from "./types";
 
-const OVERALL_TIMEOUT_MS = 50_000;
+// Vercel serverless function maximum timeout is 60s. For local development,
+// we allow a much larger timeout (5 minutes) so that long scans can complete.
+const OVERALL_TIMEOUT_MS = process.env.VERCEL ? 50_000 : 300_000;
 
 export function toScanRecord(row: typeof scans.$inferSelect): ScanRecord {
   return {

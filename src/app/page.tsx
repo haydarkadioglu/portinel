@@ -166,10 +166,10 @@ function SectionHeading({ eyebrow, title, subtitle }: { eyebrow: string; title: 
 }
 
 const FEATURES = [
-  { icon: "🛰️", title: "Port & service discovery", desc: "TCP connect scanning with banner grabbing, version detection and protocol classification across open, closed and filtered states." },
+  { icon: "🛰️", title: "Distributed scanning", desc: "Scan targets without serverless function limits. Probes IPs, subdomains and ports concurrently with optimized rate limits." },
   { icon: "🔐", title: "Deep SSL/TLS analysis", desc: "Certificate chain, expiry, cipher suites, negotiated TLS versions and weak-configuration detection with a letter grade." },
+  { icon: "🧠", title: "AI Exploit PoC Suggestions", desc: "Portinel AI analyzes findings and suggests secure, defensive Proof-of-Concept commands to quickly verify exposures." },
   { icon: "📡", title: "HTTP fingerprinting", desc: "Headers, redirects, cookies, compression, server & framework detection, CMS identification and security-header auditing." },
-  { icon: "🧠", title: "AI risk prioritization", desc: "An explainable 0–100 score, itemized deductions, executive summary and beginner-friendly explanations of every finding." },
   { icon: "🗺️", title: "Attack-surface mapping", desc: "Animated network topology, port heatmap, geolocation and findings donut to visualize exposure at a glance." },
   { icon: "📄", title: "Reporting & sharing", desc: "One-click Markdown, JSON and CSV exports, shareable links and a printable report — plus full scan history with diffs." },
 ];
