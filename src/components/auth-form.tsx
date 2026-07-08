@@ -58,7 +58,10 @@ export function AuthForm() {
         Sign in
       </button>
       <p className="text-center text-sm text-muted">
-        Access is managed by your administrator.
+        Access is managed by your{" "}
+        <a href="https://haydarkadioglu.com" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">
+          administrator
+        </a>.
       </p>
     </form>
   );

@@ -15,6 +15,7 @@ export default function LandingPage() {
             <a href="#features" className="transition hover:text-ink">Features</a>
             <a href="#modules" className="transition hover:text-ink">Scan modules</a>
             <a href="#how" className="transition hover:text-ink">How it works</a>
+            <a href="https://github.com/haydarkadioglu/portinel" target="_blank" rel="noopener noreferrer" className="transition hover:text-ink">GitHub</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link href="/login" className="btn btn-primary">Sign in</Link>
@@ -147,6 +148,7 @@ export default function LandingPage() {
           <p>© {new Date().getFullYear()} Portinel. Built for security professionals.</p>
           <div className="flex gap-5">
             <a href="#features" className="hover:text-ink">Features</a>
+            <a href="https://github.com/haydarkadioglu/portinel" target="_blank" rel="noopener noreferrer" className="hover:text-ink">GitHub</a>
             <Link href="/login" className="hover:text-ink">Sign in</Link>
           </div>
         </div>
