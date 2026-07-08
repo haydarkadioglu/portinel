@@ -20,6 +20,7 @@ const PUBLIC_ROUTES = [
   "/reset-password",
   "/api/auth/login",
   "/api/auth/register",
+  "/api/auth/logout",
   "/api/health",
 ];
 const PUBLIC_PREFIXES = ["/r/", "/api/health"];
