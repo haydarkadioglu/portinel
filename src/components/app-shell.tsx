@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard", label: "Overview", icon: <IconGrid /> },
   { href: "/dashboard/scans/new", label: "New Scan", icon: <IconRadar /> },
   { href: "/dashboard/scans", label: "Scan History", icon: <IconClock /> },
+  { href: "/dashboard/chat", label: "Portinel AI", icon: <IconChat /> },
   { href: "/dashboard/vpn", label: "VPN Tunnels", icon: <IconNetwork /> },
   { href: "/dashboard/connectors", label: "MCP Connectors", icon: <IconPlug /> },
   { href: "/dashboard/reports", label: "Reports", icon: <IconDoc /> },
@@ -262,3 +263,4 @@ function IconSearch() { return (<svg width="16" height="16" viewBox="0 0 24 24" 
 function IconPlus() { return (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>); }
 function IconBell() { return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" /></svg>); }
 function IconLogout() { return (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>); }
+function IconChat() { return (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>); }
