@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { scans } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { requireUser } from "@/lib/session";
 import { toScanRecord } from "@/lib/scan-service";
 import { StatCard, Card, SectionTitle, EmptyState, SeverityBadge } from "@/components/ui";
@@ -16,7 +16,12 @@ export default async function OverviewPage() {
   const rows = await db
     .select()
     .from(scans)
-    .where(eq(scans.userId, user.id))
+    .where(
+      and(
+        eq(scans.userId, user.id),
+        eq(scans.archived, false)
+      )
+    )
     .orderBy(desc(scans.createdAt))
     .limit(50);
   const records = rows.map(toScanRecord);

@@ -62,6 +62,7 @@ export const scans = pgTable(
       .defaultNow()
       .notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    archived: boolean("archived").default(false).notNull(),
   },
   (t) => [
     index("scans_user_idx").on(t.userId),

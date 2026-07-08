@@ -1,15 +1,27 @@
 import { NextRequest } from "next/server";
 import { subscribe, getProgress, type ScanProgress } from "@/lib/scan-events";
+import { getScan, runScanWorker, inFlight } from "@/lib/scan-service";
+import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // Server-Sent Events stream for live scan progress.
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   const { id } = await params;
+  const scan = await getScan(id, user.id);
+  if (!scan) {
+    return new Response("Not found", { status: 404 });
+  }
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -49,6 +61,16 @@ export async function GET(
             `data: ${JSON.stringify({ scanId: id, status: "queued", stage: "init", message: "Waiting for worker…", progress: 0, updatedAt: Date.now() })}\n\n`,
           ),
         );
+
+      // Trigger the worker if the scan is queued and not already running
+      if (scan.status === "queued" && !inFlight.has(id)) {
+        void runScanWorker(id, user.id, {
+          target: scan.target,
+          scanTypes: scan.scanTypes,
+        }).catch((err) => {
+          console.error(`[scan ${id}] stream worker crashed:`, err);
+        });
+      }
 
       const unsubscribe = subscribe(id, send);
 

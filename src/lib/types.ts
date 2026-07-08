@@ -302,4 +302,5 @@ export interface ScanRecord {
   label: string | null;
   createdAt: string;
   completedAt: string | null;
+  archived: boolean;
 }

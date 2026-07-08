@@ -38,6 +38,7 @@ export function toScanRecord(row: typeof scans.$inferSelect): ScanRecord {
     label: row.label,
     createdAt: row.createdAt.toISOString(),
     completedAt: row.completedAt ? row.completedAt.toISOString() : null,
+    archived: row.archived,
   };
 }
 
@@ -70,7 +71,7 @@ export interface CreateScanInput {
 }
 
 // Track in-flight scans to avoid duplicate concurrent workers for the same id.
-const inFlight = new Set<string>();
+export const inFlight = new Set<string>();
 
 export async function createScan(
   userId: string,
@@ -184,6 +185,7 @@ export async function runScanWorker(
       label: input.label ?? null,
       createdAt: new Date().toISOString(),
       completedAt: new Date().toISOString(),
+      archived: false,
     }).catch(() => {});
 
     publishProgress({ scanId, status: "completed", stage: "done", message: "Scan complete", progress: 100, updatedAt: Date.now() });
@@ -201,14 +203,21 @@ export async function runScanWorker(
 
 export async function listScans(
   userId: string,
-  opts: { limit?: number; offset?: number; target?: string } = {},
+  opts: { limit?: number; offset?: number; target?: string; showArchived?: boolean } = {},
 ): Promise<ScanRecord[]> {
   const limit = opts.limit ?? 25;
   const offset = opts.offset ?? 0;
+  const showArchived = opts.showArchived ?? false;
+
   let query = db
     .select()
     .from(scans)
-    .where(eq(scans.userId, userId))
+    .where(
+      and(
+        eq(scans.userId, userId),
+        eq(scans.archived, showArchived)
+      )
+    )
     .orderBy(desc(scans.createdAt))
     .limit(limit)
     .offset(offset)

@@ -11,6 +11,7 @@ import { SubscanLauncher } from "@/components/subscan-launcher";
 import { Card, SectionTitle, EmptyState } from "@/components/ui";
 import { Timeline } from "@/components/charts";
 import { formatDateTime, riskColor, countDescendants } from "@/lib/utils";
+import { LiveScanListener } from "@/components/live-scan-listener";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,16 @@ export default async function ScanDetailPage({
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link href="/dashboard/scans" className="text-xs text-muted hover:text-ink">← Back to history</Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/scans" className="text-xs text-muted hover:text-ink">← Back to history</Link>
+            {!scan.archived && scan.status !== "queued" && scan.status !== "running" && (
+              <form action={`/api/scans/${scan.id}/archive`} method="post" className="inline">
+                <button type="submit" className="text-[10px] text-muted border border-line rounded px-1.5 py-0.5 hover:border-brand/40 hover:text-brand transition cursor-pointer">
+                  📦 Archive
+                </button>
+              </form>
+            )}
+          </div>
           <h1 className="mt-1 truncate font-mono text-2xl font-bold tracking-tight">{scan.target}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
             <span className="capitalize">{scan.targetType}</span>
@@ -75,6 +85,10 @@ export default async function ScanDetailPage({
 
       {scan.status === "failed" && (
         <EmptyState icon="⚠️" title="Scan could not complete" description={scan.error || "The scan encountered an error."} action={<Link href="/dashboard/scans/new" className="btn btn-primary">Retry</Link>} />
+      )}
+
+      {(scan.status === "queued" || scan.status === "running") && (
+        <LiveScanListener scanId={scan.id} initialStatus={scan.status} />
       )}
 
       {diff && (

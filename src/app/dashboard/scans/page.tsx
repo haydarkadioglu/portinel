@@ -19,7 +19,13 @@ export default async function HistoryPage({
   const rows = await db
     .select()
     .from(scans)
-    .where(and(eq(scans.userId, user.id), q ? ilike(scans.target, `%${q}%`) : undefined))
+    .where(
+      and(
+        eq(scans.userId, user.id),
+        eq(scans.archived, false),
+        q ? ilike(scans.target, `%${q}%`) : undefined
+      )
+    )
     .orderBy(desc(scans.createdAt))
     .limit(100);
   const records = rows.map(toScanRecord);
