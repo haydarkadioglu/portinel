@@ -74,3 +74,12 @@ export function riskGradient(score: number): [string, string] {
   if (score >= 45) return ["#fb923c", "#fbbf24"];
   return ["#f43f5e", "#fb7185"];
 }
+
+export function countDescendants(
+  scans: { id: string; parentId: string | null }[],
+  rootId: string,
+): number {
+  const children = scans.filter((s) => s.parentId === rootId);
+  return children.length + children.reduce((acc, c) => acc + countDescendants(scans, c.id), 0);
+}
+

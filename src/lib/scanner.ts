@@ -182,7 +182,7 @@ const isHttpPort = (p: number) => p === 80 || p === 443 || HTTP_PORTS.has(p);
 // ---------------------------------------------------------------------------
 async function safeResolve<T>(fn: () => Promise<T>): Promise<T | null> {
   try {
-    return await withTimeout(fn(), 4000, null);
+    return await withTimeout(fn(), 2000, null);
   } catch {
     return null;
   }
@@ -1028,7 +1028,7 @@ async function passiveSubdomainDiscovery(
           fetch(`https://crt.sh/?q=%.${domain}&output=json`, {
             headers: { Accept: "application/json", "User-Agent": UA },
           }),
-          15000,
+          6000,
           null as Response | null,
         );
         if (!resp || !resp.ok) return;
@@ -1049,7 +1049,7 @@ async function passiveSubdomainDiscovery(
             `https://api.certspotter.com/v1/issuances?domain=${encodeURIComponent(domain)}&include_subdomains=true&expand=dns_names`,
             { headers: { Accept: "application/json", "User-Agent": UA } },
           ),
-          12000,
+          6000,
           null as Response | null,
         );
         if (!resp || !resp.ok) return;
@@ -1069,7 +1069,7 @@ async function passiveSubdomainDiscovery(
           fetch(`https://api.hackertarget.com/hostsearch/?q=${encodeURIComponent(domain)}`, {
             headers: { "User-Agent": UA },
           }),
-          12000,
+          6000,
           null as Response | null,
         );
         if (!resp || !resp.ok) return;
@@ -1104,7 +1104,7 @@ async function probeSubdomains(domain: string): Promise<SubdomainResult[]> {
   // --- Layer 1: passive OSINT discovery (crt.sh + CertSpotter + HackerTarget)
   const { names: passiveHosts, ipMap: passiveIps } = await passiveSubdomainDiscovery(domain);
   if (passiveHosts.size) {
-    const verified = await pool([...passiveHosts], 30, async (host) => {
+    const verified = await pool([...passiveHosts], 60, async (host) => {
       // Use IPs from HackerTarget if available; otherwise resolve.
       let ips = passiveIps.get(host);
       if (!ips || !ips.length) ips = await resolveIps(host);
@@ -1116,7 +1116,7 @@ async function probeSubdomains(domain: string): Promise<SubdomainResult[]> {
 
   // --- Layer 2: active DNS brute-force with the expanded wordlist ---------
   const candidates = SUBDOMAIN_WORDS.map((w) => `${w}.${domain}`);
-  const brute = await pool(candidates, 30, async (host) => {
+  const brute = await pool(candidates, 60, async (host) => {
     const ips = await resolveIps(host);
     if (!ips.length || !passesWildcard(ips)) return null;
     return { hostname: host, ips, source: "dns" };

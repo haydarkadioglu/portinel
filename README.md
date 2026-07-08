@@ -2,6 +2,9 @@
 
 **Production-grade cyber reconnaissance platform** — runs entirely on your machine. No login, no cloud services, no Supabase. Just clone, run, and scan.
 
+> [!WARNING]
+> **LEGAL & ETHICAL DISCLAIMER (YASAL UYARI):** This tool is designed strictly for authorized penetration testing, security auditing, and educational research. The developers and owners of Portinel assume no liability for any misuse, damage, or unauthorized scanning conducted using this software. By using or deploying this platform, you assume full legal responsibility.
+
 ---
 
 ## 🚀 Quick Start
