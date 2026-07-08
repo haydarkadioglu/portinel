@@ -75,15 +75,34 @@ export const scans = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// Chat messages — persistent AI conversation memory per scan
+// Chat sessions — general AI chat conversations
+// ---------------------------------------------------------------------------
+export const chatSessions = pgTable(
+  "chat_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull().default("New Chat"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("chat_session_user_idx").on(t.userId)],
+);
+
+// ---------------------------------------------------------------------------
+// Chat messages — persistent AI conversation memory per scan or session
 // ---------------------------------------------------------------------------
 export const chatMessages = pgTable(
   "chat_messages",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     scanId: uuid("scan_id")
-      .notNull()
       .references(() => scans.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id")
+      .references(() => chatSessions.id, { onDelete: "cascade" }),
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -95,7 +114,10 @@ export const chatMessages = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [index("chat_scan_idx").on(t.scanId)],
+  (t) => [
+    index("chat_scan_idx").on(t.scanId),
+    index("chat_session_idx").on(t.sessionId),
+  ],
 );
 
 // ---------------------------------------------------------------------------
