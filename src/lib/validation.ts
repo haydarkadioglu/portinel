@@ -70,8 +70,27 @@ export function parseTarget(raw: string): {
   target?: ParsedTarget;
   error?: string;
 } {
-  const value = raw.trim();
+  let value = raw.trim();
   if (!value) return { ok: false, error: "Target is required." };
+
+  // 1. Strip protocol if present
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const url = new URL(value);
+      value = url.hostname;
+    } catch {
+      value = value.replace(/^https?:\/\//i, "");
+    }
+  }
+
+  // 2. Strip trailing slash and any paths (e.g., "example.com/path" -> "example.com")
+  value = value.split("/")[0];
+
+  // 3. Strip port numbers if present (e.g., "example.com:8080" -> "example.com")
+  if (value.includes(":") && (value.match(/:/g) || []).length === 1) {
+    value = value.split(":")[0];
+  }
+
   if (value.length > 253)
     return { ok: false, error: "Target is too long." };
 
